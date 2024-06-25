@@ -1,3 +1,5 @@
+# 环境配置
+
 ## 请求库的安装
 爬虫可以简单分为几步：抓取页面、分析页面和存储数据。 
 
@@ -191,6 +193,79 @@ MySQL、MongoDB、Redis提供了存储服务，但如果想要和 Python 交互�
 
 如 MySQL 需要安装 PyMySQL，MongoDB 需要安装 PyMongo 等。
 
-### PyMySQL 的安装
+## Web 库的安装
+Web 服务程序，比如 Flask、Django 等，可以拿它来开发网站和接口等。
 
+在本项目中，主要使用这些 Web 服务程序来搭建一些 API 接口，供爬虫使用。
 
+例如，维护一个代理池，代理保存在 Redis 数据库中，要将代理池作为一个公共的组件使用。
+
+那么如何构建一个方便的平台来供我们获取这些代理呢？
+
+最合适不过的就是通过 Web 服务提供一个 API 接口，只需要请求接口即可获取新的代理，这样做简单、高效、实用！
+
+### Flask 安装
+Flask 是一个轻量级的 Web 服务程序，简单、易用、灵活。
+> - GitHub：https://github.com/pallets/flask
+> - 官方文档：https://flask.palletsprojects.com/en/3.0.x/
+> - 中文文档：https://docs.jinkan.org/docs/flask/
+
+```PYTHON
+from flask import Flask
+app = Flask(__name__)
+
+@app.route("/")
+def hello():
+    return "Hello World!"
+
+if __name__ == "__main__":
+    app.run()
+```
+
+###  Tornado 安装
+Tornado 是一个支持异步的 Web 框架，通过使用非阻塞 I/O 流，它可以支撑成千上万的开放连接，效率非常高。
+> - GitHub：https://github.com/tornadoweb/tornado
+> - 官方文档：https://www.tornadoweb.org/en/stable/
+ 
+**验证安装**
+```PYTHON
+import tornado.ioloop
+import tornado.web
+
+class MainHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.write("Hello, world")
+
+def make_app():
+    return tornado.web.Application([(r"/", MainHandler),
+    ])
+
+if __name__ == "__main__":
+    app = make_app()
+    app.listen(8888)
+    tornado.ioloop.IOLoop.current().start()
+```
+运行程序，可以发现系统在 8888 端口运行了 Web 服务，控制台没有输出内容，此时访问 http:127.0.0.1/8888，web 页面出现 Hello,world
+
+### Django 安装
+Django 是一个由 Python 编写的一个开放源代码的 Web 应用框架。 是一个高级的 Python Web 框架，用于快速开发可维护和可扩展的 Web 应用程序。
+
+Django 本身基于 MVC 模型，即 Model（模型）+ View（视图）+ Controller（控制器）设计模式，MVC 模式使后续对程序的修改和扩展简化，并且使程序某一部分的重复利用成为可能。
+
+## App相关爬取库安装
+https://gitcode.com/Germey/Python3WebSpider/blob/master/1.7-App%E7%88%AC%E5%8F%96%E7%9B%B8%E5%85%B3%E5%BA%93%E7%9A%84%E5%AE%89%E8%A3%85.md
+
+## 爬虫框架安装
+PySpider Scrapy
+
+### TODO
+
+## 部署相关库的安装
+大规模抓取数据会用到分布式爬虫。
+> 分布式爬虫需要多台主机，每台主机有多个爬虫任务，但是源代码其实只有一份。需要将一份代码同时部署到多台主机上来协同运行。
+
+对于 Scrapy 来说，它有一个扩展组件，叫作 Scrapyd，需要安装该扩展组件，即可远程管理 Scrapy 任务，包括部署源码、启动任务、监听任务等。另外，还有 Scrapyd-Client 和 Scrapyd API 来方便地完成部署和监听操作。
+
+Docker 集群部署。只需要将爬虫制作为 Docker 镜像，只要主机安装了 Docker，就可以直接运行爬虫，而无需再去担心环境配置、版本问题。
+
+更多参考 - [部署相关库的安装](https://gitcode.com/Germey/Python3WebSpider/blob/master/1.9-%E9%83%A8%E7%BD%B2%E7%9B%B8%E5%85%B3%E5%BA%93%E7%9A%84%E5%AE%89%E8%A3%85.md)
