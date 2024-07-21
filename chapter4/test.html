@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8"><!--不加该行会出现中午字符乱码问题-->
+    <title>The Dormouse's story</title>
+</head>
+<body>
+<p class="title" name="dormouse" style="color: red;"><b>The Dormouse's story</b></p>
+<p class="story">Once upon a time there were three little sisters;and their names were
+    <a href="http://example.com/elsie" class="sister" id="link1"><span>Elsie</span></a>,
+<a href="http://example.com/lacie" class="sister" id="link2">Lacie</a> and
+<a href="http://example.com/tillie" class="sister" id="link3">Tillie</a>;
+and they lived at the bottom of a well.</p>
+<p class="story">
+    ...
+    <button id="btn">(动态)单击</button>
+    <button id="bt2" onclick="alert('你单击了1次！');">(静态)单击</button>
+</p>
+
+<div id="container">
+    <ul class="list">
+         <li class="item-0">first item</li>
+         <li class="item-1"><a href="link2.html">second item</a></li>
+         <li class="item-0 active"><a href="link3.html"><span class="bold">third item</span></a></li>
+         <li class="item-1 active"><a href="link4.html">fourth item</a></li>
+         <li class="item-0"><a href="link5.html">fifth item</a></li>
+     </ul>
+ </div>
+
+</body>
+<!--human machine interact conversation-->
+<script>
+    var user=prompt("input your username，please：");
+    if(!!user){
+        var ok=confirm("your username is:\n"+user+"\nplease confirm！");
+        if(ok){
+            alert("welcome！\n"+user);
+        }else{
+            user=prompt("please re-input your username:");
+            alert("welcome！\n"+user);
+        }
+    }else{
+        user=prompt("input your username，please：")
+    }
+</script>
+<!--自动弹出窗口 30s后自动关 单击跳转到另一页面-->
+<script>
+    var url="https://news.baidu.com";
+    var features="height=190,width=280,top=520,left=1080,toolbar=no,menubar=no,scrollbars=no," +
+        "resizable=no,location=no,status=no"
+    document.write('<a href="https://www.zhihu.com" target="newW">切换到知乎</a>');
+    // 加入try catch语句判断网页是否禁止弹窗
+    var error=false;
+    try{
+    var me=window.open(url,"newW",features);
+    if (me==null){ error=true; }
+    setTimeout(function () {
+        if(me.closed){
+            alert("小窗口关闭。")
+        }else {
+            me.close();
+        }
+    },10000);//弹窗保持10s
+    }catch (ex){
+        error=true;
+    }if (error){
+        alert("Browser ban popups!")
+    }
+</script>
+<script>
+    var button=document.getElementById("btn");//动态绑定
+    button.onclick=function(){
+        alert("你单击了1次！")
+    }
+</script>
+</html>
