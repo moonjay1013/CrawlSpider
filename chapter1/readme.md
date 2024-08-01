@@ -256,9 +256,53 @@ Django 本身基于 MVC 模型，即 Model（模型）+ View（视图）+ Contro
 https://gitcode.com/Germey/Python3WebSpider/blob/master/1.7-App%E7%88%AC%E5%8F%96%E7%9B%B8%E5%85%B3%E5%BA%93%E7%9A%84%E5%AE%89%E8%A3%85.md
 
 ## 爬虫框架安装
-PySpider Scrapy
+ TODO  -- PySpider 
 
-### TODO
+### Scrapy安装
+需要安装以下第三方库：
+```bash
+pip install ruamel-yaml
+pip install pyinstaller-hooks-contrib>=2020.6
+pip install pyqt5<5.13
+pip install pyqtwebengine<5.13
+```
+解决 AttributeError: module 'lib' has no attribute 'X509_V_FLAG_NOTIFY_POLICY'
+> 解决方案: https://github.com/conda/conda/issues/13619
+```bash
+pip install pyOpenSSL>=23.2.0
+```
+最后才能成功安装scrapy
+```bash
+pip install Scrapy
+-i https://pypi.tuna.tsinghua.edu.cn/simple/
+```
+
+验证安装：
+```bash
+(base) PS D:\Python\py_files\CrawlSpider> scrapy                                                                    
+D:\Python\Anaconda\lib\site-packages\scrapy\utils\_compression.py:15: ScrapyDeprecationWarning: You have brotlipy installed, and Scrapy will use it, but Scrapy support for brotlipy is deprecated and wi
+ll stop working in a future version of Scrapy. brotlipy itself is deprecated, it has been superseded by brotlicffi (not currently supported by Scrapy). Please, uninstall brotlipy and install brotli instead. brotlipy has the same import name as brotli, so keeping both installed is strongly discouraged.
+  warn(
+Scrapy 2.11.2 - no active project
+
+Usage:
+  scrapy <command> [options] [args]
+
+Available commands:
+  bench         Run quick benchmark test
+  fetch         Fetch a URL using the Scrapy downloader
+  genspider     Generate new spider using pre-defined templates
+  runspider     Run a self-contained spider (without creating a project)
+  settings      Get settings values
+  shell         Interactive scraping console
+  startproject  Create new project
+  version       Print Scrapy version
+  view          Open URL in browser, as seen by Scrapy
+
+  [ more ]      More commands available when run from project directory
+
+Use "scrapy <command> -h" to see more info about a command
+```
 
 ## 部署相关库的安装
 大规模抓取数据会用到分布式爬虫。
