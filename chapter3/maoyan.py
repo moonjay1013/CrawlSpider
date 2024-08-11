@@ -64,7 +64,7 @@ def get_one_page(url):
     """
     抓取一页的内容（返回网页源代码）
     :param url:
-    :return:
+    :return: page_source
     """
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
@@ -79,9 +79,8 @@ def get_one_page(url):
 def parse_one_page(html):
     """
     解析网页代码
-    排名, img src, 电影名, 出演人员, 上映时间, 评分（整数部分）, 评分（小数部分）
     :param html:
-    :return: 生成器生成的 { }
+    :return: 生成器生成的 { 排名, img src, 电影名, 出演人员, 上映时间, 评分（整数部分）, 评分（小数部分） }
     """
     pattern_str = '<dd>.*?board-index.*?>(.*?)</i>.*?data-src="(.*?)".*?name.*?a.*?>(.*?)</a>.*?star.*?>(.*?)</p>.*?releasetime.*?>(.*?)</p>.*?integer.*?>(.*?)</i>.*?fraction.*?>(.*?)</i>.*?</dd>'
 
@@ -101,7 +100,7 @@ def write_to_file(content):
     将提取的结果写入到一个文本文件中。
     这里通过 JSON 库的 dumps 方法实现字典的序列化，并指定 ensure_ascii 参数为 False，这样可以保证输出结果是中文形式而不是 Unicode 编码。
     :param content:
-    :return:
+    :return: None
     """
     with open('result.txt', 'a', encoding='utf-8') as f:
         # print(type(json.dumps(content)))
@@ -117,10 +116,7 @@ if __name__ == '__main__':
         write_to_file(parse_re)
         print(parse_re)
     """
-
-    """
-    给这个链接传入 offset 参数，实现其他 90 部电影的爬取，此时添加如下调用即可：
-    """
+    # 给这个链接传入 offset 参数，实现其他 90 部电影的爬取，此时添加如下调用即可：
     for i in range(10):
         offset = i * 10
         url = 'https://www.maoyan.com/board/4?offset=' + str(offset)
