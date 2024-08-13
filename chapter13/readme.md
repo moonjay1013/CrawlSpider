@@ -324,3 +324,127 @@ ll stop working in a future version of Scrapy. brotlipy itself is deprecated, it
 > 
 > 最后，Scrapy 输出了整个抓取过程的统计信息，如请求的字节数、请求次数、响应次数、完成原因等。 
 
+#### 保存到文件
+
+Scrapy 提供的 `Feed Exports` 可以轻松将抓取结果输出。
+
+例如，我们想将上面的结果保存成 JSON 文件，可以执行命令： `scrapy crawl quotes -o quotes.json`
+
+> 命令运行后，项目内多了一个 quotes.json 文件，文件包含了刚才抓取的所有内容，内容是 JSON 格式。
+
+另外还可以每一个 Item 输出一行 JSON，输出后缀为 `.jl`，为 jsonline 的缩写，命令如下所示：
+
+`scrapy crawl quotes -o quotes.jl` 或 `scrapy crawl quotes -o quotes.jsonlines`
+
+输出格式还支持很多种，例如 `csv、xml、pickle、marshal` 等，还支持 `ftp、s3` 等远程输出，另外还可以通过自定义 `ItemExporter` 来实现其他的输出。
+
+例如，下面命令对应的输出分别为 `csv、xml、pickle、marshal` 格式以及 `ftp` 远程输出：
+```shell
+scrapy crawl quotes -o quotes.csv
+scrapy crawl quotes -o quotes.xml
+scrapy crawl quotes -o quotes.pickle
+scrapy crawl quotes -o quotes.marshal
+scrapy crawl quotes -o ftp://user:pass@ftp.example.com/path/to/quotes.csv
+```
+
+> 其中，`ftp` 输出需要正确配置用户名、密码、地址、输出路径，否则会报错。
+
+通过 Scrapy 提供的 Feed Exports，可以轻松地输出抓取结果到文件。对于一些小型项目来说足够。
+
+不过如果想要更复杂的输出，如**输出到数据库等，可以使用 `Item Pileline` 来完成**。
+
+#### 使用 Item Pipeline
+
+将结果保存到 MongoDB 数据库，或者筛选某些有用的 Item，可以定义 `Item Pipeline` 来实现。
+
+> `Item Pipeline` 为项目管道。当 Item 生成后，它会自动被送到 `Item Pipeline` 进行处理
+> 
+> 常用 Item Pipeline 来做如下操作。 
+> - 清洗 HTML 数据 
+> - 验证爬取数据，检查爬取字段 
+> - 查重并丢弃重复内容 
+> - 将爬取结果储存到数据库
+
+实现 `Item Pipeline` 需要定义一个类并实现 `process_item()` 方法。
+
+启用 `Item Pipeline` 后，`Item Pipeline` 会自动调用这个方法。`process_item()` 方法必须返回包含数据的字典或 Item 对象，或者抛出 `DropItem` 异常。
+
+> `process_item()` 方法有两个参数。一个参数是 `item`，每次 Spider 生成的 Item 都会作为参数传递过来。另一个参数是 `spider`，就是 Spider 的实例。
+
+接下来，实现一个 `Item Pipeline`，筛掉 text 长度大于 50 的 Item，并将结果保存到 MongoDB。
+
+修改项目里的 `pipelines.py` 文件，~~之前用命令行自动生成的文件内容可以删掉，~~增加一个 `TextPipeline` 类，内容如下所示：
+```python
+from scrapy.exceptions import DropItem
+
+class TextPipeline(object):
+    def __init__(self):
+        self.limit = 50
+    
+    def process_item(self, item, spider):
+        if item['text']:
+            if len(item['text']) > self.limit:
+                item['text'] = item['text'][0:self.limit].rstrip() + '...'
+            return item
+        else:
+            return DropItem('Missing Text')
+```
+
+> 这段代码在构造方法里定义了限制长度为 50，实现了 `process_item()` 方法，其参数是 `item` 和 `spider`。
+> 
+> 首先该方法判断 item 的 `text` 属性是否存在，如果不存在，则抛出 `DropItem` 异常；
+> 
+> 如果存在，再判断长度是否大于 50，如果大于，那就截断然后拼接省略号，再将 item 返回即可。
+
+接下来，将处理后的 item 存入 MongoDB，定义另外一个 Pipeline。
+
+同样在 `pipelines.py` 中，实现另一个类 `MongoPipeline`，内容如下所示：
+
+```python
+import pymongo
+
+
+class MongoPipeline(object):
+    def __init__(self, mongo_uri, mongo_db):
+        self.mongo_uri = mongo_uri
+        self.mongo_db = mongo_db
+
+    @classmethod
+    def from_crawler(cls, crawler):
+        return cls(mongo_uri=crawler.settings.get('MONGO_URI'),
+            mongo_db=crawler.settings.get('MONGO_DB')
+        )
+
+    def open_spider(self, spider):
+        self.client = pymongo.MongoClient(self.mongo_uri)
+        self.db = self.client[self.mongo_db]
+
+    def process_item(self, item, spider):
+        name = item.__class__.__name__
+        self.db[name].insert(dict(item))
+        return item
+
+    def close_spider(self, spider):
+        self.client.close()
+```
+
+> `MongoPipeline` 类实现了 API 定义的另外几个方法。 
+> - `from_crawler`，这是一个类方法，用 `@classmethod` 标识，是一种依赖注入的方式，方法的参数就是 `crawler`，通过 crawler 这个可以拿到全局配置的每个配置信息，
+> 
+>   在全局配置 `settings.py` 中可以定义 `MONGO_URI` 和 `MONGO_DB` 来指定 MongoDB 连接需要的地址和数据库名称，拿到配置信息之后返回类对象即可。所以这个方法的定义主要是用来获取 `settings.py` 中的配置的。 
+> - `open_spider`，当 Spider 被开启时，这个方法被调用。在这里主要进行了一些初始化操作。 
+> - `close_spider`，当 Spider 被关闭时，这个方法会调用，在这里**将数据库连接关闭**。
+
+在 `settings.py` 中加入如下内容：
+```python
+ITEM_PIPELINES = {
+   'scrapy_tutorial.pipelines.TextPipeline': 300,
+   'scrapy_tutorial.pipelines.MongoPipeline': 400,
+}
+MONGO_URI = 'localhost'
+MONGO_DB = 'scrapy_tutorial'
+```
+
+赋值 `ITEM_PIPELINES` 字典，**键名是 Pipeline 的类名称，键值是调用优先级，是一个数字，数字越小则对应的 Pipeline 越先被调用**。
+
+再重新执行爬取：`scrapy crawl quotes`

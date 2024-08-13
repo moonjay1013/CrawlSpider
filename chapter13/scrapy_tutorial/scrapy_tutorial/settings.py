@@ -12,6 +12,13 @@ BOT_NAME = "scrapy_tutorial"
 SPIDER_MODULES = ["scrapy_tutorial.spiders"]
 NEWSPIDER_MODULE = "scrapy_tutorial.spiders"
 
+ITEM_PIPELINES = {
+   'scrapy_tutorial.pipelines.TextPipeline': 300,
+   'scrapy_tutorial.pipelines.MongoPipeline': 400,
+}
+MONGO_URI = 'localhost'
+MONGO_DB = 'scrapy_tutorial'
+
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = "scrapy_tutorial (+http://www.yourdomain.com)"
