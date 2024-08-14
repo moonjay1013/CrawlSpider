@@ -450,3 +450,115 @@ MONGO_DB = 'scrapy_tutorial'
 再重新执行爬取：`scrapy crawl quotes`
 
 ![](13-4.png)
+
+### 3 Selector 的用法
+
+Scrapy 除了可以使用利用 `Beautiful Soup、pyquery` 以及 `re` 提取网页数据，还可以使用 `Selector`（选择器）。
+
+`Selector` 是基于 `lxml` 来构建的，支持 **XPath 选择器**、**CSS 选择器**以及**正则表达式**，功能全面，解析速度和准确度非常高。
+
+- 直接使用
+
+  `Selector` 是一个可以独立使用的模块。利用 `Selector` 类构建一个选择器对象，然后调用它的相关方法如 `xpath()`、`css()` 等来提取数据。
+
+  例如，针对一段 HTML 代码，可以用如下方式构建 `Selector` 对象来提取数据：
+  ```python
+  from scrapy import Selector
+  
+  body = '<html><head><title>Hello World</title></head><body></body></html>'
+  selector = Selector(text=body)
+  title = selector.xpath('//title/text()').extract_first()
+  print(title)
+  ```
+  
+- Scrapy Shell
+
+  `Selector` 主要是与 Scrapy 结合使用
+
+  > Scrapy 的回调函数中的参数 `response` 直接调用 `xpath()` 或者 `css()` 方法来提取数据
+
+  借助 **Scrapy shell** 来模拟 Scrapy 请求的过程：
+
+  用官方文档的一个样例页面来做演示：https://doc.scrapy.org/en/latest/_static/selectors-sample1.html
+
+  开启 **Scrapy shell**，在命令行输入如下命令：`scrapy shell https://doc.scrapy.org/en/latest/_static/selectors-sample1.html`
+
+  > 进入到 Scrapy shell 模式。
+  > 
+  > 这个过程：Scrapy 发起了一次请求，请求的 URL 就是刚才命令行下输入的 URL，然后把一些可操作的变量（如 `request、response` 等）传递回来
+
+  ![](13-5.png)
+
+  **XPath 选择器**
+
+  进入 Scrapy shell，主要操作 `response` 这个变量来进行解析。因为解析的是 HTML 代码，`Selector` 将自动使用 HTML 语法来分析。
+
+  `response` 有一个属性 `selector`，调用 `response.selector` 返回的内容就相当于用 `response` 构造了一个 `Selector` 对象。
+
+  通过这个 `Selector` 对象可以调用解析方法如 `xpath()、css()` 等，通过向方法传入 XPath 或 CSS 选择器参数就可以实现信息的提取。
+
+  实例如下所示：
+
+  ```shell
+  In [2]: result = response.selector.xpath('//a')
+  
+  In [3]: result
+  Out[3]:
+  [<Selector query='//a' data='<a href="image1.html">Name: My image ...'>,
+   <Selector query='//a' data='<a href="image2.html">Name: My image ...'>,
+   <Selector query='//a' data='<a href="image3.html">Name: My image ...'>,
+   <Selector query='//a' data='<a href="image4.html">Name: My image ...'>,
+   <Selector query='//a' data='<a href="image5.html">Name: My image ...'>]
+  
+  In [4]: type(result)
+  Out[4]: scrapy.selector.unified.SelectorList
+  ```
+  > 注意：选择器的最前方加 `.`，代表**提取元素内部的数据**，如果**没有加点，则代表从根节点开始提取**。
+  > 
+  > - 上例可以接着用 `./img` 的提取方式，从 `a` 节点里进行提取。 
+  > - 如果上例接着用 `//img`，则还是从 `html`（根） 节点里进行提取。
+
+  刚才使用了 `response.selector.xpath()` 方法对数据进行了提取。
+
+  Scrapy 提供了两个实用的快捷方法（`spiders/爬虫文件名.py` 中 `parse(self, response)` ）：
+  - `response.xpath()`
+  - `response.css()`
+  > 它们二者的功能完全等同于 `response.selector.xpath()` 和 `response.selector.css()`。
+
+  上面得到的 `SelectorList` 类型的变量是由 `Selector` 对象组成的列表。可以用索引单独取出其中某个 `Selector` 元素，
+
+  但是 `Selector` 并不是真正的文本内容。例如想提取出 `a` 节点元素，就可以利用 `extract()`——list, `extract_first()`——str。
+
+  **正则匹配**
+
+  例如在示例的 `a` 节点中的文本类似于 "Name: My image 1"，现在只想把 "Name:" 后面的内容提取出来，就可以借助 `re()` 方法，实现如下：
+
+  ```shell
+  In [5]: response.xpath('//a/text()').re('Name:\s(.*)')
+  Out[5]: ['My image 1 ', 'My image 2 ', 'My image 3 ', 'My image 4 ', 'My image 5 ']
+  ```
+  
+  如果同时存在两个分组，那么结果依然会被按序输出，此时，类似 `extract_first()`，`re_first()` 可以选取列表的第一个元素，用法如下：
+
+  ```shell
+  In [6]: response.xpath('//a/text()').re('(.*?):\s(.*)')
+  Out[6]:
+  ['Name',
+   'My image 1 ',
+   'Name',
+   'My image 2 ',
+   'Name',
+   'My image 3 ',
+   'Name',
+   'My image 4 ',
+   'Name',
+   'My image 5 ']
+  
+  In [7]:  response.xpath('//a/text()').re_first('(.*?):\s(.*)')
+  Out[7]: 'Name'
+  
+  In [8]:  response.xpath('//a/text()').re_first('Name:\s(.*)')
+  Out[8]: 'My image 1 '
+  ```
+  
+### 4 Spider的用法
