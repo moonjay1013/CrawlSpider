@@ -448,3 +448,5 @@ MONGO_DB = 'scrapy_tutorial'
 赋值 `ITEM_PIPELINES` 字典，**键名是 Pipeline 的类名称，键值是调用优先级，是一个数字，数字越小则对应的 Pipeline 越先被调用**。
 
 再重新执行爬取：`scrapy crawl quotes`
+
+![](13-4.png)
